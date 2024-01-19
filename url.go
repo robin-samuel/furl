@@ -1017,6 +1017,53 @@ func (v Values) Encode() string {
 	return buf.String()
 }
 
+// SoftEncode encodes the values into “URL encoded” form but skips value escaping
+// ("bar=baz&foo=quux") using the order defined by ValueOrderKey if present.
+// Keys not included in ValueOrderKey will be encoded in lexicographic order
+// after the ordered keys.
+func (v Values) SoftEncode() string {
+	var buf strings.Builder
+	orderedKeys := make(map[string]bool)
+
+	// Check if ValueOrderKey is present and use it if so.
+	if order, ok := v[ValueOrderKey]; ok {
+		for _, key := range order {
+			orderedKeys[key] = true
+			if values, ok := v[key]; ok {
+				for _, value := range values {
+					if buf.Len() > 0 {
+						buf.WriteByte('&')
+					}
+					buf.WriteString(QueryEscape(key))
+					buf.WriteByte('=')
+					buf.WriteString(value)
+				}
+			}
+		}
+	}
+
+	// Append remaining keys in lexicographic order.
+	var remainingKeys []string
+	for key := range v {
+		if key != ValueOrderKey && !orderedKeys[key] {
+			remainingKeys = append(remainingKeys, key)
+		}
+	}
+	sort.Strings(remainingKeys)
+	for _, key := range remainingKeys {
+		for _, value := range v[key] {
+			if buf.Len() > 0 {
+				buf.WriteByte('&')
+			}
+			buf.WriteString(QueryEscape(key))
+			buf.WriteByte('=')
+			buf.WriteString(value)
+		}
+	}
+
+	return buf.String()
+}
+
 // resolvePath applies special path segments from refs and applies
 // them to base, per RFC 3986.
 func resolvePath(base, ref string) string {
