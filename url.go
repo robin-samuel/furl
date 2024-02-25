@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package url parses URLs and implements query escaping.
-package url
+// Package furl parses URLs and implements query escaping.
+package furl
 
 // See RFC 3986. This package generally follows RFC 3986, except where
 // it deviates for compatibility reasons. When sending changes, first
